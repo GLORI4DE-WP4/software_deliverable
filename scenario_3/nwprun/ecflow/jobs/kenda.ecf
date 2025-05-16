@@ -1,0 +1,44 @@
+%include <sched_mpi_enda.h>
+%include <%HPCENV%/modules_kenda_icon.h>
+%include <head.h>
+
+# source other optional modules
+. $NWPCONFBINDIR/parcomp.sh
+# end of setup
+
+#export GRIB_DEFINITION_PATH=$GRIB_API_EDZW/1.11.0/definitions.cnmc:$GRIB_API_EDZW/1.11.0/definitions
+#export GRIB_SAMPLES_PATH=$GRIB_API_EDZW/1.11.0/samples
+export GRIB_DEFINITION_PATH=$GRIB_API_EDZW/1.16.0/definitions.cnmc:$GRIB_API_EDZW/1.16.0/definitions
+export GRIB_SAMPLES_PATH=$GRIB_API_EDZW/1.16.0/samples
+
+set -x
+
+cd $LETKF_WORKDIR
+KENDA_CRASH=N
+if [ ! -f "$LETKF_WORKDIR/letkf_skip" ]; then
+    if [ "$ECF_TRYNO" != "%ECF_TRIES%" ]; then # forgive crash only at last try
+        parcomp_mpirun $EXTRA_MPIRUN_LETKF $LETKF_BIN
+    else
+        parcomp_mpirun $EXTRA_MPIRUN_LETKF $LETKF_BIN || KENDA_CRASH=Y
+    fi
+fi
+
+# if there are no observations or the analysis crashed make a fake analysis
+# make a physical copy of the link targets to help the successive
+# archiving process
+if [ -f "$LETKF_WORKDIR/letkf_skip" -o "$KENDA_CRASH" = "Y" ]; then
+    # Create file with zero analysis incrementes for determinitic
+    cp $(conf_getfile ana_inc_0.det) $LETKF_WORKDIR
+    $SIMC_TOOLS grib_set -s dataDate=$DATE,dataTime=$TIME ana_inc_0.det \
+            $LETKF_DATADIR/laf${DATE}${TIME}0000_inc.det
+
+    # Create file with zero analysis incrementes for ensemble members
+    cp $(conf_getfile ana_inc_0.ens) $LETKF_WORKDIR
+    for n in `seq 1 $ENS_TOTAL_MEMB`; do
+        n3=`printf "%%03d" $n`
+        $SIMC_TOOLS grib_set -s dataDate=$DATE,dataTime=$TIME,perturbationNumber=$n \
+                ana_inc_0.ens $LETKF_DATADIR/laf${DATE}${TIME}0000_inc.$n3
+    done
+fi
+
+%include <tail.h>

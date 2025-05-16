@@ -1,0 +1,40 @@
+#!/bin/bash
+%include <head.h>
+
+# Unloading modules
+module unload intel-oneapi-compilers/2023.2.1
+module unload intel-oneapi-mpi/2021.10.0
+module unload intel-oneapi-mkl/2023.2.0
+module unload libszip/2.1.1--oneapi--2023.2.0
+module unload zlib/1.3--gcc--12.2.0
+module unload zlib-ng/2.1.4--oneapi--2023.2.0
+module unload zstd/1.5.5--oneapi--2023.2.0-7fv2v7i
+module unload libaec/1.0.6--oneapi--2023.2.0-ohnhau5
+module unload bzip2/1.0.8--oneapi--2023.2.0-775effc
+module unload lz4/1.9.4--oneapi--2023.2.0-whwwyrc
+module unload snappy/1.1.10--oneapi--2023.2.0-ta4wo5m
+module unload c-blosc/1.21.5--oneapi--2023.2.0-e7safqx
+module unload pkgconf/1.9.5-gr2lx34
+module unload hdf5/1.14.3--intel-oneapi-mpi--2021.10.0--oneapi--2023.2.0
+module unload parallel-netcdf/1.12.3--intel-oneapi-mpi--2021.10.0--oneapi--2023.2.0
+module unload netcdf-c/4.9.2--intel-oneapi-mpi--2021.10.0--oneapi--2023.2.0
+module unload netcdf-fortran/4.6.1--intel-oneapi-mpi--2021.10.0--oneapi--2023.2.0
+module unload openjpeg/2.3.1--oneapi--2023.2.0-63yr4zj
+module unload eccodes/2.33.0--intel-oneapi-mpi--2021.10.0--oneapi--2023.2.0
+# Loading modules
+module load profile/meteo
+module load nvhpc/23.1
+module load openmpi/4.1.4--nvhpc--23.1-cuda-11.8
+module load eccodes/2.25.0--nvhpc--23.1
+module load cdo/2.1.0--gcc--11.3.0
+# Appending paths to PATH and exporting ECCODES_DEFINITION_PATH
+export ECCODES_DEFINITION_PATH="/leonardo_scratch/fast/DE360_GLORI/definitions/2.32.0-2/definitions.edzw":"/leonardo_scratch/fast/DE360_GLORI/definitions/2.32.0-2/definitions"
+export PATH="/leonardo_work/DE360_GLORI/spack_env/install/linux-rhel8-icelake/nvhpc-23.1/eccodes-2.32.0-uvqgacgswurbbpjrl6wxocgevjs5mqxk/bin":$PATH
+export PATH="/leonardo_work/DE360_GLORI/spack_env/install/linux-rhel8-icelake/nvhpc-23.1/netcdf-c-4.9.2-2tw6sc6pyqnex6fp466os3luysxivtty/bin":$PATH
+export PATH="/leonardo_work/DE360_GLORI/spack_env/install/linux-rhel8-icelake/nvhpc-23.1/hdf5-1.14.3-o4ctspbmy2t5wnqg35lnzcfvbqugivjo/bin":$PATH
+export PATH="/leonardo/prod/spack/03/install/0.19/linux-rhel8-icelake/nvhpc-23.1/openmpi-4.1.4-6ek2oqarjw755glr5papxirjmamqwvgd/bin":$PATH
+
+# Run the cycle command with the appropriate dates
+ksh %MORE_DIR%/prep_more ICON-LAM MAIN %MORE_DIR%/iodir_main 0 0 %FC_DATE% BACY %LAM_DATA_DIR%
+
+%include <tail.h>

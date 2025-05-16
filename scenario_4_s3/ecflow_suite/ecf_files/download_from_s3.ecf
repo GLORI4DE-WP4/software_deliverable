@@ -1,0 +1,28 @@
+#!/bin/bash
+%include <head.h>
+
+# Download the files using a python script
+source %ACTIVATE_PATH%
+%PYTHON% %SUITE_DIR%/scripts/download_from_s3.py --bucket=%BUCKET% --destination=%DEST% --fc_date=%FC_DATE% --boto_credentials=%BOTO_CRED% --verbose=%VERBOSE%
+
+# Check if the required files exist
+echo "Checking if all files have been saved correctly."
+required_files=(
+  "an_R03B07.%FC_DATE%_inc"
+  "fc_R03B07.%PREV_FC_DATE%"
+  "fc_R03B07_tiles.%PREV_FC_DATE%"
+  "fc_R03B08_N02.%PREV_FC_DATE%"
+  "fc_R03B08_N02_tiles.%PREV_FC_DATE%"
+)
+
+for file in "${required_files[@]}"; do
+  if [ ! -f "%DEST%/%FC_DATE%/$file" ]; then
+    echo "Missing required file: $file"
+    exit 1 # Task will fail if any file is missing
+  fi
+done
+
+# If all files are present, the task completes successfully
+echo "All required files have been downloaded present."
+
+%include <tail.h>

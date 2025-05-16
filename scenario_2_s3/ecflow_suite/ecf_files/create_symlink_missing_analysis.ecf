@@ -1,0 +1,25 @@
+#!/bin/bash
+%include <head.h>
+
+# Variables for origin and destination directories
+MORE_INPUT_DIR=%MORE_INPUT_DIR%
+FC_DATE=%FC_DATE%
+
+# Link ilaf%FC_DATE%.grb.det to ini_R19B07.%FC_DATE%0000
+dest_file="$MORE_INPUT_DIR/ini_R19B07.$FC_DATE"0000
+if [ -h "$dest_file" ]; then
+    echo "Warning: Symlink $dest_file exists. Replacing it."
+    rm "$dest_file"
+    ln -s "$MORE_INPUT_DIR/ilaf$FC_DATE.grb.det" "$dest_file"
+    echo "Re-linked: $dest_file"
+elif [ -f "$dest_file" ]; then
+    echo "Warning: Regular file $dest_file exists. Skipping link creation."
+else
+    ln -s "$MORE_INPUT_DIR/ilaf$FC_DATE.grb.det" "$dest_file"
+    echo "Linked: $dest_file"
+fi
+
+# If all checks pass, the task completes successfully
+echo "All needed files have been successfully linked to '%MORE_INPUT_DIR%'."
+
+%include <tail.h>

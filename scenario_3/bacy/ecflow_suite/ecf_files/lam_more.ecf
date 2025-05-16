@@ -1,0 +1,28 @@
+#!/bin/bash
+%include <head.h>
+
+# Variables provided by ecflow
+FC_START=%FC_START%
+MORE_DIR=%MORE_DIR%
+MEM_NUM=%MEM_NUM%
+MORE_MODE=%MORE_MODE%
+# Using the variables to define paths for BACY
+IODIR_MAIN=$MORE_DIR/iodir_main/mem$MEM_NUM
+
+# Loading modules
+module load profile/meteo
+module load nvhpc/23.1
+module load openmpi/4.1.4--nvhpc--23.1-cuda-11.8
+module load eccodes/2.25.0--nvhpc--23.1
+module load cdo/2.1.0--gcc--11.3.0
+# Appending paths to PATH and exporting ECCODES_DEFINITION_PATH
+export ECCODES_DEFINITION_PATH="/leonardo_scratch/fast/DE360_GLORI/definitions/2.32.0-2/definitions.edzw":"/leonardo_scratch/fast/DE360_GLORI/definitions/2.32.0-2/definitions"
+export PATH="/leonardo_work/DE360_GLORI/spack_env/install/linux-rhel8-icelake/nvhpc-23.1/eccodes-2.32.0-uvqgacgswurbbpjrl6wxocgevjs5mqxk/bin":$PATH
+export PATH="/leonardo_work/DE360_GLORI/spack_env/install/linux-rhel8-icelake/nvhpc-23.1/netcdf-c-4.9.2-2tw6sc6pyqnex6fp466os3luysxivtty/bin":$PATH
+export PATH="/leonardo_work/DE360_GLORI/spack_env/install/linux-rhel8-icelake/nvhpc-23.1/hdf5-1.14.3-o4ctspbmy2t5wnqg35lnzcfvbqugivjo/bin":$PATH
+export PATH="/leonardo/prod/spack/03/install/0.19/linux-rhel8-icelake/nvhpc-23.1/openmpi-4.1.4-6ek2oqarjw755glr5papxirjmamqwvgd/bin":$PATH
+
+# Run the cycle command with the appropriate dates
+ksh $MORE_DIR/more ICON-LAM $MORE_MODE $IODIR_MAIN 0 0 $FC_START
+
+%include <tail.h>

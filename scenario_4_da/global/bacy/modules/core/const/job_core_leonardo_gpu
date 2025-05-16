@@ -1,0 +1,108 @@
+#!/bin/bash
+                      #### BATCH_SYSTEM=SLURM ####
+########################################################################
+#SBATCH --account smr_prod
+#SBATCH --partition dcgp_usr_prod
+#SBATCH --job-name CO_ICON_%expid%
+#SBATCH --qos=normal
+#SBATCH --output=end_LL
+#SBATCH --error=err_LL
+#SBATCH --nodes=6
+#SBATCH --ntasks-per-node=112
+#SBATCH --sockets-per-node=2
+##SBATCH --cores-per-socket=56
+#SBATCH --ntasks-per-socket=56
+#SBATCH --cpus-per-task=1
+#SBATCH --ntasks-per-core=1
+##SBATCH --mem=360G
+#SBATCH --time=00:30:00
+#SBATCH --export=ALL,BINARY=%binary%
+#########################################################################
+#
+module purge
+# load correct modules 
+module load intel-oneapi-compilers/2023.2.1                             
+module load intel-oneapi-mpi/2021.10.0   
+module load pkgconf/1.9.5-gr2lx34                                       
+module load zlib-ng/2.1.4--oneapi--2023.2.0                             
+module load hdf5/1.14.3--intel-oneapi-mpi--2021.10.0--oneapi--2023.2.0
+LD_LIBRARY_PATH=/leonardo_work/smr_prod/lami/srcintel/install/lib:$LD_LIBRARY_PATH
+GRIB_API_EDZW=/leonardo_work/smr_prod/lami/grib_api_edzw
+export GRIB_DEFINITION_PATH=$GRIB_API_EDZW/1.16.0/definitions.cnmc:$GRIB_API_EDZW/1.16.0/definitions
+export GRIB_SAMPLES_PATH=$GRIB_API_EDZW/1.16.0/samples
+echo "###CORE: Job-ID : $SLURM_JOB_ID"
+echo "###CORE: Host   : $(hostname)"
+echo
+#
+echo "Loaded modules:"
+echo "==============="
+echo $( module list )
+echo
+echo "LD_LIBRARY_PATH:"
+echo "================"
+echo ${LD_LIBRARY_PATH}
+echo
+echo "SLURM environment variables:"
+echo "============================"
+echo "SLURM_JOB_NODELIST   = ${SLURM_JOB_NODELIST}"
+echo "SLURM_JOB_NUM_NODES  = ${SLURM_JOB_NUM_NODES}"
+echo "SLURM_TASKS_PER_NODE = ${SLURM_TASKS_PER_NODE}"
+echo "SLURM_CPUS_PER_TASK  = ${SLURM_CPUS_PER_TASK}"
+echo "SLURM_CPUS_ON_NODE   = ${SLURM_CPUS_ON_NODE}"
+echo "SLURM_NTASKS         = ${SLURM_NTASKS}"
+echo
+########################################################################
+
+NODES=%nodes%
+HYPER=%hyperthreads%
+########################################################################
+export OMP_NUM_THREADS=${OMP_NUM_THREADS:-1}
+export NUM_CORES=${SLURM_NTASKS}*${SLURM_CPUS_PER_TASK}
+echo "${BINARY} running on ${NUM_CORES} cores with ${SLURM_NTASKS} MPI-tasks and ${OMP_NUM_THREADS} threads"
+
+########################################################################
+# cleanup
+cd $SLURM_SUBMIT_DIR
+echo $SLURM_SUBMIT_DIR
+########################################################################
+# run the binary
+echo
+echo "in rundir: $(pwd)"
+echo
+ls -lL $BINARY
+rm -f READY
+echo
+ls -lL ../input
+echo
+echo "###CORE: Job start: $(date)"
+echo
+echo "TMP fix: replacing namelist"
+echo
+rm namelist
+cp /leonardo_work/DE360_GLORI/smr_prod/scenarios/scenario_4_da/namelist_kenda namelist
+echo
+#ln -s /leonardo_work/DE360_GLORI/smr_prod/s3_test/initial_italy/fc_R03B06.2023051600.001 ../input/fc_R03B06.2023051600.001
+#ln -s /leonardo_work/DE360_GLORI/smr_prod/s3_test/initial_italy/fc_R03B06.2023051600.002 ../input/fc_R03B06.2023051600.002
+#ln -s /leonardo_work/DE360_GLORI/smr_prod/s3_test/initial_italy/fc_R03B06.2023051600.003 ../input/fc_R03B06.2023051600.003
+#ln -s /leonardo_work/DE360_GLORI/smr_prod/s3_test/initial_italy/fc_R03B06.2023051600.004 ../input/fc_R03B06.2023051600.004
+echo
+export MPIRUN_OPTIONS="--bind-to core --map-by core -report-bindings"
+startexe="mpirun -n ${SLURM_NTASKS} ${BINARY}"
+echo $startexe
+mpirun -v -n ${SLURM_NTASKS} ${BINARY}
+rc=$?
+echo ${rc}
+echo "------------------------------------------------------------------------"
+echo
+echo "###CORE: Job end:   $(date)"
+echo
+########################################################################
+# delete empty files
+find -size 0 -delete
+# check return code
+if [ $rc -ne 0 ]; then
+    echo "mpirun failed: rc=$rc" 
+    echo "mpirun failed: rc=$rc" >&2
+    exit $rc
+fi
+date > READY

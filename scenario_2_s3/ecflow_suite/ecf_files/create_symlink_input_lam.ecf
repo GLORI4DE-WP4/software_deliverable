@@ -1,0 +1,60 @@
+#!/bin/bash
+%include <head.h>
+
+# Check if destination directory exists
+if [ -d %DEST_DIR% ]; then
+    # Check if directory is not empty
+    if [ "$(ls -A %DEST_DIR%)" ]; then
+        echo "Warning: The destination directory '%DEST_DIR%' exists and is not empty."
+    fi
+else
+    # Directory doesn't exist, so create it
+    echo "The destination directory '%DEST_DIR%' does not exist and will be created."
+    mkdir -p "%DEST_DIR%"
+fi
+
+# Link files from origin to destination
+for file in %ORIGIN_DIR%/*; do
+    dest_file="%DEST_DIR%/$(basename "$file")"
+
+    # Skip if the file is a directory
+    if [ -d "$file" ]; then
+        echo "Skipping directory: $file"
+        continue
+    fi
+    
+    # If the destination exists and is a symlink, delete the old link and create a new one
+    if [ -h "$dest_file" ]; then
+        echo "Warning: Destination '$dest_file' exists as a symlink. Replacing the symlink."
+        rm "$dest_file"
+        ln -s "$file" "$dest_file"
+        echo "Re-linked: $(realpath "$dest_file")"
+    # If the destination exists and is a file, don't overwrite it, print a warning
+    elif [ -f "$dest_file" ]; then
+        echo "Warning: Destination file '$dest_file' exists as a regular file. Skipping link creation."
+    else
+        # If the destination does not exist, create a new symlink
+        ln -s "$file" "$dest_file"
+        echo "Linked: $(realpath "$dest_file")"
+    fi
+done
+
+# Check if the required symlinks exist
+echo "Checking if all required files have been linked correctly."
+required_links=(
+  "ilaf%FC_DATE%*"
+  "lbc_*"
+)
+
+for pattern in "${required_links[@]}"; do
+  # Check for symbolic links that match the pattern
+  if [ -z "$(find "%DEST_DIR%" -name "$pattern" -type l -print -quit)" ]; then
+    echo "Missing required symbolic link: $pattern"
+    exit 1 # Task will fail if any symlink is missing
+  fi
+done
+
+# If all symlinks are present, the task completes successfully
+echo "All required symbolic links are present."
+
+%include <tail.h>

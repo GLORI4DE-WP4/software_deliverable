@@ -1,0 +1,26 @@
+#!/bin/bash
+%include <head.h>
+
+# Download the files using a python script
+source %ACTIVATE_PATH%
+%PYTHON% %SUITE_DIR%/scripts/download_lam_from_s3.py --bucket=%BUCKET% --destination=%DEST% --fc_date=%FC_DATE% --boto_credentials=%BOTO_CRED% --verbose=%VERBOSE%
+
+# Check if the required files exist
+echo "Checking if all files have been saved correctly."
+required_files=(
+  "ilaf%FC_DATE%*"
+  "lbc_R19B07.%FC_DATE%*"
+)
+
+for pattern in "${required_files[@]}"; do
+  # Check for files that match the pattern
+  if [ -z "$(find "%DEST%/%FC_DATE%" -name "$pattern" -print -quit)" ]; then
+    echo "Missing required file: $pattern"
+    exit 1 # Task will fail if any file is missing
+  fi
+done
+
+# If all files are present, the task completes successfully
+echo "All required files have been downloaded present."
+
+%include <tail.h>

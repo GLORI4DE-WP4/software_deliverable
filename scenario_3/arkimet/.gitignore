@@ -1,0 +1,10 @@
+# Ignore everything in this directory
+*
+# Except the following files/directories
+!.gitignore
+!archive
+!gts_bufr_conv
+!hres_am_foricon
+!ifsens_am_foricon
+!import_signal
+!README.txt

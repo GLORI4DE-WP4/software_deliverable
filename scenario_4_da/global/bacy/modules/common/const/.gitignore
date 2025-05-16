@@ -1,0 +1,5 @@
+# Ignore everything in this directory
+*
+# Except the following files/directories
+!.gitignore
+!bacy_icon_const_conf.sh

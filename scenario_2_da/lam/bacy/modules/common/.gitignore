@@ -1,0 +1,7 @@
+# Ignore everything in this directory
+*
+# Except the following files/directories
+!.gitignore
+!bacy_conf.sh
+!get_data_conf.sh
+!const

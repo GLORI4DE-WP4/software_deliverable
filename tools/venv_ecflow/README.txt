@@ -1,0 +1,1 @@
+Instructions for the creation of the virtual environment available in the file "how_to_install_ecflow_on_leonardo.txt", insde the "tools/ecflow" directory.

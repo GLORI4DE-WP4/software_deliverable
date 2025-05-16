@@ -1,0 +1,2 @@
+#SBATCH --qos=normal
+#SBATCH -A DE360_GLORI

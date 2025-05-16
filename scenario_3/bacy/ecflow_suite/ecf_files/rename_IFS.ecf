@@ -1,0 +1,24 @@
+#!/bin/bash
+%include <head.h>
+
+# Variables passed by the ecFlow suite
+SCRIPTS_DIR=%SCRIPTS_DIR%           # Path to the script directory (within ecflow_suite)
+ARCHIVE_PATH=%ARCHIVE_PATH%         # Path to the folder where the files are stored
+OUTPUT_DIR=%OUTPUT_DIR%             # Output directory where the files should be copied and renamed
+ACTIVATE_PATH=%ACTIVATE_PATH%       # Path to virtual environment activation executable
+# Suite-wide parameters
+START_DATEHOUR=%FC_START%
+END_DATEHOUR=%FC_END%
+
+# Activating python environment
+source ${ACTIVATE_PATH}
+
+# Run the Python script with the required arguments
+python ${SCRIPTS_DIR}/rename_IFS.py --archive_path "$ARCHIVE_PATH" \
+                                    --start_datehour "$START_DATEHOUR" \
+                                    --end_datehour "$END_DATEHOUR" \
+                                    --output_dir "$OUTPUT_DIR"
+
+echo "IFS data renamed and stored into ${OUTPUT_DIR}."
+
+%include <tail.h>

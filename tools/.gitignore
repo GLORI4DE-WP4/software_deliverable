@@ -1,0 +1,8 @@
+# Ignore everything in this directory
+*
+# Except the following files/directories
+!.gitignore
+!dace
+!ecflow
+!venv_ecflow
+!python_tools

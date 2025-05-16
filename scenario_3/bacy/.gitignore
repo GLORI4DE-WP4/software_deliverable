@@ -1,0 +1,8 @@
+# Ignore everything in this directory
+*
+# Except the following files/directories
+!.gitignore
+!bacy_data
+!lam
+!ecflow_suite
+!README.txt

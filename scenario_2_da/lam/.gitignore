@@ -1,0 +1,6 @@
+# Ignore everything in this directory
+*
+# Except the following files/directories
+!.gitignore
+!bacy
+!namelist_kenda

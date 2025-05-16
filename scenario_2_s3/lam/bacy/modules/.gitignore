@@ -1,0 +1,7 @@
+# Ignore everything in this directory
+*
+# Except the following files/directories
+!.gitignore
+!common
+!int2lm
+!more

@@ -1,0 +1,32 @@
+#!/bin/bash
+%include <head.h>
+
+# Variables provided by ecFlow
+NWPRUN_OUT_DIR=%NWPRUN_OUT_DIR%
+NUM_MEMBERS=%NUM_MEMBERS%
+FC_START=%FC_START%
+GRID_DOM01=%GRID_DOM01%
+GRID_DOM02=%GRID_DOM02%
+SCRIPTS_DIR=%SCRIPTS_DIR%
+BACY_DATA_ROOT_DIR=%BACY_DATA_ROOT_DIR%
+
+# Print inputs
+echo "Starting processing with the following parameters:"
+echo "NWPRUN_OUT_DIR     = $NWPRUN_OUT_DIR"
+echo "NUM_MEMBERS        = $NUM_MEMBERS"   
+echo "FC_START           = $FC_START"
+echo "GRID_DOM01         = $GRID_DOM01"
+echo "GRID_DOM02         = $GRID_DOM02"
+echo "SCRIPTS_DIR        = $SCRIPTS_DIR"
+echo "BACY_DATA_ROOT_DIR = $BACY_DATA_ROOT_DIR"
+
+python3 "$SCRIPTS_DIR/link_da_output.py"  "$NWPRUN_OUT_DIR" \
+                                          "$NUM_MEMBERS" \
+                                          "$FC_START" \
+                                          "$GRID_DOM01" \
+                                          "$GRID_DOM02" \
+                                          "$BACY_DATA_ROOT_DIR"
+
+echo "link_da_output execution complete."
+
+%include <tail.h>

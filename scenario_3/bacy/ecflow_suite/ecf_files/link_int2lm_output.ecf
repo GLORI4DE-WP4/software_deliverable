@@ -1,0 +1,28 @@
+#!/bin/bash
+%include <head.h>
+
+# Variables provided by ecFlow
+FC_START=%FC_START%
+NUM_MEMBERS=%NUM_MEMBERS%
+SRC_BACY_DATA_ROOT_DIR=%SRC_BACY_DATA_ROOT_DIR%
+TGT_BACY_DATA_ROOT_DIR=%TGT_BACY_DATA_ROOT_DIR%
+MAIN_NUMBER=%MAIN_NUMBER%
+SCRIPTS_DIR=%SCRIPTS_DIR%
+
+# Print inputs
+echo "FC_START               = $FC_START"
+echo "NUM_MEMBERS        = $NUM_MEMBERS"
+echo "SRC_BACY_DATA_ROOT_DIR = $SRC_BACY_DATA_ROOT_DIR"
+echo "TGT_BACY_DATA_ROOT_DIR = $TGT_BACY_DATA_ROOT_DIR"
+echo "MAIN_NUMBER            = $MAIN_NUMBER"
+echo "SCRIPTS_DIR            = $SCRIPTS_DIR"
+
+python3 "$SCRIPTS_DIR/link_int2lm_output.py" "$FC_START" \
+                                             "$NUM_MEMBERS" \
+                                             "$SRC_BACY_DATA_ROOT_DIR" \
+                                             "$TGT_BACY_DATA_ROOT_DIR" \
+                                             "$MAIN_NUMBER"
+
+echo "link_int2lm_output execution complete."
+
+%include <tail.h>

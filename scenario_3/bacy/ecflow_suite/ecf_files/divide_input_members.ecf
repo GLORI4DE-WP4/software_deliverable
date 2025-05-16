@@ -1,0 +1,93 @@
+#!/bin/bash
+%include <head.h>
+
+# Input parameters
+OUTPUT_DIR=%OUTPUT_DIR%
+NUMBER_OF_MEMBERS=%NUMBER_OF_MEMBERS%
+TIME_INTERVAL=%TIME_INTERVAL%
+PARENTMODEL_ARKI_DS=%PARENTMODEL_ARKI_DS%
+BASE_DIR=%BASE_DIR%
+CONTAINER_PATH=%CONTAINER_PATH%
+SCRIPTS_DIR=%SCRIPTS_DIR%
+# Suite-wide parameters
+FC_START=%FC_START%
+FC_END=%FC_END%
+
+# Computing auxiliary quantities from input variables
+START_HOUR=${FC_START:8:2}
+END_HOUR=${FC_END:8:2}
+REF_DATE=${FC_START:0:8}
+END_DATE=${FC_END:0:8}
+REF_TIME=${START_HOUR}
+
+# The tools used are the ones from the operational Arpae suite
+SIMC_TOOLS="singularity exec -B $BASE_DIR $CONTAINER_PATH"
+
+# Loading needed modules
+module load profile/meteo
+
+# Create the output directory if it doesn't exist
+mkdir -p "$OUTPUT_DIR"
+
+echo "Retrieving ensemble members from Arkimet..."
+echo "Output directory: $OUTPUT_DIR"
+echo "Number of members: $NUMBER_OF_MEMBERS"
+echo "Forecast range: $REF_DATE $START_HOUR to $END_DATE $END_HOUR hours, interval: $TIME_INTERVAL hours"
+echo "Reference date/time: $REF_DATE $REF_TIME"
+
+# Function to determine delta_t based on hour
+get_delta_t() {
+  local HOUR=$1
+  case $HOUR in
+  "00" | "06" | "12" | "18") echo 6 ;;
+  "01" | "07" | "13" | "19") echo 7 ;;
+  "02" | "08" | "14" | "20") echo 8 ;;
+  "03" | "09" | "15" | "21") echo 9 ;;
+  "04" | "10" | "16" | "22") echo 10 ;;
+  "05" | "11" | "17" | "23") echo 11 ;;
+  esac
+}
+
+# Loop over ensemble members
+for MEMBER in $(seq 1 $NUMBER_OF_MEMBERS); do
+  echo "Processing ensemble member $MEMBER..."
+  
+  CURRENT_TIME="$FC_START"
+  while [ "$CURRENT_TIME" -le "$FC_END" ]; do
+    CURR_DATE=${CURRENT_TIME:0:8}
+    CURR_HOUR=${CURRENT_TIME:8:2}
+    
+    # Calculate the reference time
+    DELTA_T=$(get_delta_t $CURR_HOUR)
+    REFTIME=$(${SCRIPTS_DIR}/format_reftime.sh "$CURR_DATE" "$CURR_HOUR" "$DELTA_T")
+    
+    # Prepare arkimet timerange options
+    TIMERANGE="timerange:Timedef,${DELTA_T}h,254;"
+    
+    # Define output file path
+    OUTPUT_FILE="$OUTPUT_DIR/U3X${REF_DATE:4:4}${REF_TIME}${CURR_DATE}${CURR_HOUR}001.grb.$MEMBER"
+    
+    # Check if file already exists
+    if [ -s "$OUTPUT_FILE" ]; then
+        echo "    File $OUTPUT_FILE already exists. Skipping download."
+    else
+        # Retrieve data for the specified hour
+        echo "Downloading data for $CURR_DATE $CURR_HOUR..."
+        
+        $SIMC_TOOLS arki-query --data -o "$OUTPUT_FILE" \
+          "reftime:=$REFTIME;$TIMERANGE" $PARENTMODEL_ARKI_DS
+        
+        if [ ! -s "$OUTPUT_FILE" ]; then
+            echo "    Warning: File for $CURR_DATE $CURR_HOUR could not be retrieved."
+        else
+            echo "    File saved to $OUTPUT_FILE"
+        fi
+    fi
+    
+    # Update CURRENT_TIME by adding TIME_INTERVAL
+    CURRENT_TIME=$(${SCRIPTS_DIR}/format_nexttime.sh "$CURR_DATE" "$CURR_HOUR" "$TIME_INTERVAL")
+  done
+done
+
+echo "All retrievals complete."
+%include <tail.h>

@@ -1,0 +1,65 @@
+#!/bin/bash
+%include <head.h>
+
+# Check if destination directory exists
+if [ -d %DEST_DIR% ]; then
+    # Check if directory is not empty
+    if [ "$(ls -A %DEST_DIR%)" ]; then
+        echo "Warning: The destination directory '%DEST_DIR%' exists and is not empty."
+    fi
+else
+    # Directory doesn't exist, so create it
+    echo "The destination directory '%DEST_DIR%' does not exist and will be created."
+    mkdir -p "%DEST_DIR%"
+fi
+
+# Check if output directory of int2lm exists
+if [ -d %DEST_DIR%/%FC_DATE% ]; then
+    # Check if directory is not empty
+    if [ "$(ls -A %DEST_DIR%/%FC_DATE%)" ]; then
+        echo "Warning: The output directory '%DEST_DIR%/%FC_DATE%' exists and is not empty."
+    fi
+else
+    # Directory doesn't exist, so create it
+    echo "The output directory '%DEST_DIR%/%FC_DATE%' does not exist and will be created."
+    mkdir -p "%DEST_DIR%/%FC_DATE%"
+fi
+
+# Handle 'hhl*' files
+for file in %ORIGIN_DIR%/hhl*; do
+    if [ ! -f "$file" ]; then
+        echo "No 'hhl*' files found in '%ORIGIN_DIR%'."
+        exit 1
+    fi
+
+    dest_file="%DEST_DIR%/$(basename "$file")"
+    if [ -f "$dest_file" ]; then
+        echo "Warning: Destination file '$dest_file' already exists. Skipping link."
+        continue
+    fi
+
+    ln -s "$file" "$dest_file"
+    echo "Linked: $(realpath "$file") -> $dest_file"
+done
+
+# Handle 'ieff*' files
+for file in %ORIGIN_DIR%/ieff*; do
+    if [ ! -f "$file" ]; then
+        echo "No 'ieff*' files found in '%ORIGIN_DIR%'."
+        exit 1
+    fi
+
+    dest_file="%DEST_DIR%/$(basename "$file")"
+    if [ -f "$dest_file" ]; then
+        echo "Warning: Destination file '$dest_file' already exists. Skipping link."
+        continue
+    fi
+
+    ln -s "$file" "$dest_file"
+    echo "Linked: $(realpath "$file") -> $dest_file"
+done
+
+# If all checks pass, the task completes successfully
+echo "All 'hhl*' and 'ieff*' files have been successfully linked to '%DEST_DIR%'."
+
+%include <tail.h>

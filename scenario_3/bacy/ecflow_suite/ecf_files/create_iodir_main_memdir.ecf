@@ -1,0 +1,44 @@
+#!/bin/bash
+%include <head.h>
+
+# Variables provided by ecflow
+INPUT_DIR=%INPUT_DIR%
+MEM_NUM=%MEM_NUM%
+
+echo "Creating iodir_main in the directory:"
+echo "INPUT_DIR=$INPUT_DIR"
+echo "Processing member number: $MEM_NUM"
+
+# Ensure the input directory exists
+if [[ ! -d $INPUT_DIR ]]; then
+    echo "Error: Input directory $INPUT_DIR does not exist!"
+    exit 1
+fi
+
+# Create iodir_main directory if it doesn't exist
+IODIR_MAIN="$INPUT_DIR/iodir_main"
+mkdir -p "$IODIR_MAIN"
+
+echo "iodir_main directory created or already exists at: $IODIR_MAIN"
+
+# Process the specified member number
+MEMBER_DIR="$IODIR_MAIN/mem${MEM_NUM}"
+
+# If the member directory exists, delete it and print a warning
+if [[ -d $MEMBER_DIR ]]; then
+    echo "Warning: Directory $MEMBER_DIR exists. Deleting it before recreating."
+    rm -rf "$MEMBER_DIR"
+fi
+
+# Recreate the member directory and subdirectories
+mkdir -p "$MEMBER_DIR/input"
+mkdir -p "$MEMBER_DIR/output"
+mkdir -p "$MEMBER_DIR/run"
+
+echo "Created directory structure for mem${MEM_NUM}:"
+echo "  - $MEMBER_DIR/input"
+echo "  - $MEMBER_DIR/output"
+echo "  - $MEMBER_DIR/run"
+
+echo "create_iodir_main_memdir.ecf execution complete."
+%include <tail.h>

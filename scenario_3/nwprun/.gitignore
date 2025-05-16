@@ -1,0 +1,8 @@
+# Ignore everything in this directory
+*
+# Except the following files/directories
+!.gitignore
+!conf
+!ecflow
+!README.txt
+!icon_suite_enda_only.py

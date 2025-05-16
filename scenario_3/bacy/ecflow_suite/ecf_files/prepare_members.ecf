@@ -1,0 +1,76 @@
+#!/bin/bash
+%include <head.h>
+
+# Variables provided by ecflow
+INPUT_DIR=%INPUT_DIR%
+OUTPUT_DIR=%OUTPUT_DIR%
+INT_DIR=%INT_DIR%
+NUM_MEMBERS=%NUM_MEMBERS%
+FORMATTED_NUMBERS_FILE=%ECF_HOME%/formatted_numbers.txt
+# Suite-wide parameters
+FC_START=%FC_START%
+
+# Print inputs
+echo "Preparing members with the following parameters:"
+echo "INPUT_DIR=$INPUT_DIR"
+echo "OUTPUT_DIR=$OUTPUT_DIR"
+echo "INT_DIR=$INT_DIR"
+echo "NUM_MEMBERS=$NUM_MEMBERS"
+
+# Ensure required directories exist
+mkdir -p "$OUTPUT_DIR"
+mkdir -p "$INT_DIR"
+
+# Load formatted numbers into an array
+if [[ ! -f $FORMATTED_NUMBERS_FILE ]]; then
+    echo "Error: Auxiliary file $FORMATTED_NUMBERS_FILE not found!"
+    exit 1
+fi
+
+mapfile -t formatted_numbers < "$FORMATTED_NUMBERS_FILE"
+
+# Check if the number of formatted numbers matches the expected members
+if [[ ${#formatted_numbers[@]} -lt $NUM_MEMBERS ]]; then
+    echo "Error: Not enough formatted numbers in $FORMATTED_NUMBERS_FILE for $NUM_MEMBERS members."
+    exit 1
+fi
+
+# Process each member
+for ((member_index=0; member_index < NUM_MEMBERS; member_index++)); do
+    formatted_number="${formatted_numbers[$member_index]}"
+    echo "Processing member $formatted_number..."
+
+    # Create output subdirectory for member
+    MEMBER_DIR="$OUTPUT_DIR/mem${formatted_number}/${FC_START}"
+    mkdir -p "$MEMBER_DIR"
+
+    # Link files for this member
+    for file in "$INPUT_DIR"/fc_ifs.*."$formatted_number"; do
+        echo "-----------"
+        echo "$file"
+        if [[ -e $file ]]; then
+            echo "ln -sf $file ${MEMBER_DIR}/${base_name}"
+            base_name=$(basename "$file" | sed "s/\.$formatted_number$//")
+            ln -sf "$file" "${MEMBER_DIR}/${base_name}"
+        fi
+    done
+
+    # Link first time step to specific filename
+    first_timestep_file="$INPUT_DIR/fc_ifs.${FC_START}_00000000.${formatted_number}"
+    if [[ -e $first_timestep_file ]]; then
+        ln -sf "$first_timestep_file" "${MEMBER_DIR}/iefff00000000_${FC_START}.grb"
+        echo "Linked $first_timestep_file to ${MEMBER_DIR}/iefff00000000_${FC_START}.grb"
+    else
+        echo "Warning: First time step file $first_timestep_file not found for member $formatted_number."
+    fi
+
+    # Create subdirectories in INT_DIR
+    INT_MEMBER_DIR="$INT_DIR/iodir_main/mem${formatted_number}"
+    mkdir -p "$INT_MEMBER_DIR/input"
+    mkdir -p "$INT_MEMBER_DIR/output"
+    mkdir -p "$INT_MEMBER_DIR/run"
+
+done
+
+echo "Script execution complete."
+%include <tail.h>

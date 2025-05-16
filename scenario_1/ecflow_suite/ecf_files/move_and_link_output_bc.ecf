@@ -1,0 +1,49 @@
+#!/bin/bash
+%include <head.h>
+
+# Check if destination directory exists
+if [ -d %DEST_DIR% ]; then
+    if [ "$(ls -A %DEST_DIR%)" ]; then
+        echo "Warning: The destination directory '%DEST_DIR%' exists and is not empty."
+    fi
+else
+    echo "The destination directory '%DEST_DIR%' does not exist and will be created."
+    mkdir -p "%DEST_DIR%"
+fi
+
+# Move and link iefff* files from ORIGIN_DIR/FC to DEST_DIR
+for file in %ORIGIN_DIR%/FC/iefff*; do
+    dest_file="%DEST_DIR%/$(basename "$file")"
+    if [ -f "$dest_file" ]; then
+        echo "Warning: Destination file '$dest_file' already exists. Skipping move."
+        continue
+    fi
+    ln -s "$file" "$dest_file"
+    echo "Created symlink: $(realpath "$file") -> $dest_file"
+done
+
+# Check and link ini_DOM02_ML_0000000.grb to iefff00000000_%FC_DATE%.grb
+if [ -f %DEST_DIR%/iefff00000000_%FC_DATE%.grb ]; then
+    echo "Warning: Link '%DEST_DIR%/iefff00000000_%FC_DATE%.grb' already exists. Replacing it."
+else
+    ln -s %MORE_DIR%/iodir_main/output/det/ini_DOM02_ML_0000000.grb %DEST_DIR%/iefff00000000_%FC_DATE%.grb
+    echo "Linked: ini_DOM02_ML_0000000.grb to iefff00000000_%FC_DATE%.grb"
+fi
+
+# Check and link ini_DOM02_ML_0000000.grb to iefff00000000_ini_n
+if [ -f %DEST_DIR%/iefff00000000_ini_n ]; then
+    echo "Warning: Link '%DEST_DIR%/iefff00000000_ini_n' already exists. Replacing it."
+else
+    ln -s %MORE_DIR%/iodir_main/output/det/ini_DOM02_ML_0000000.grb %DEST_DIR%/iefff00000000_ini_n
+    echo "Linked: ini_DOM02_ML_0000000.grb to iefff00000000_ini_n"
+fi
+
+# Check and link bc_DOM02_ML_0000000_hhl.grb to hhl_0027_iefff00000000
+if [ -f %DEST_DIR%/hhl_0027_iefff00000000 ]; then
+    echo "Warning: Link '%DEST_DIR%/hhl_0027_iefff00000000' already exists. Replacing it."
+else
+    ln -s %MORE_DIR%/iodir_main/output/det/bc_DOM02_ML_0000000_hhl.grb %DEST_DIR%/hhl_0027_iefff00000000
+    echo "Linked: bc_DOM02_ML_0000000_hhl.grb to hhl_0027_iefff00000000"
+fi
+
+%include <tail.h>

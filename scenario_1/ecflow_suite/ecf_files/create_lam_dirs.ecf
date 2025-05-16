@@ -1,0 +1,31 @@
+#!/bin/bash
+%include <head.h>
+
+# Function to check and create missing directories
+check_and_create_dirs() {
+    local dir=$1
+
+    # Check if iodir_main exists, if not, create it
+    if [ ! -d "$dir/iodir_main" ]; then
+        echo "Directory '$dir/iodir_main' does not exist. Creating it."
+        mkdir -p "$dir/iodir_main"
+    fi
+
+    # Create input, output, and run directories inside iodir_main if they don't exist
+    for subdir in input output run; do
+        if [ ! -d "$dir/iodir_main/$subdir" ]; then
+            echo "Directory '$dir/iodir_main/$subdir' does not exist. Creating it."
+            mkdir -p "$dir/iodir_main/$subdir"
+        fi
+    done
+}
+
+# Check and create directories in %INT_DIR%/iodir_main
+check_and_create_dirs "%INT_DIR%"
+
+# Check and create directories in %MORE_DIR%/iodir_main
+check_and_create_dirs "%MORE_DIR%"
+
+echo "Directory checks and creation complete for %INT_DIR% and %MORE_DIR%"
+
+%include <tail.h>

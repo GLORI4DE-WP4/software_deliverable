@@ -1,0 +1,82 @@
+#!/bin/bash
+%include <head.h>
+
+# Variables for origin and destination directories
+MORE_INPUT_DIR=%MORE_INPUT_DIR%
+LAM_DATA_DIR=%LAM_DATA_DIR%
+INT_OUTPUT_DIR=%INT_OUTPUT_DIR%
+FC_DATE=%FC_DATE%
+
+# Link and move operations with checks
+
+# 1. Link ilaf%FC_DATE%.grb.det to ini_R19B07.%FC_DATE%0000
+dest_file="$MORE_INPUT_DIR/ini_R19B07.$FC_DATE"0000
+if [ -h "$dest_file" ]; then
+    echo "Warning: Symlink $dest_file exists. Replacing it."
+    rm "$dest_file"
+    ln -s "$MORE_INPUT_DIR/ilaf$FC_DATE.grb.det" "$dest_file"
+    echo "Re-linked: $dest_file"
+elif [ -f "$dest_file" ]; then
+    echo "Warning: Regular file $dest_file exists. Skipping link creation."
+else
+    ln -s "$MORE_INPUT_DIR/ilaf$FC_DATE.grb.det" "$dest_file"
+    echo "Linked: $dest_file"
+fi
+
+# 2. Move ilaf%FC_DATE%_n.grb.det from INT_OUTPUT_DIR to LAM_DATA_DIR
+if [ -f "$LAM_DATA_DIR/ilaf${FC_DATE}_n.grb.det" ]; then
+    echo "Warning: File $LAM_DATA_DIR/ilaf${FC_DATE}_n.grb.det already exists. No action taken."
+elif [ -f "$INT_OUTPUT_DIR/ilaf${FC_DATE}_n.grb.det" ]; then
+    mv "$INT_OUTPUT_DIR/ilaf${FC_DATE}_n.grb.det" "$LAM_DATA_DIR"
+    echo "Moved: $INT_OUTPUT_DIR/ilaf${FC_DATE}_n.grb.det to $LAM_DATA_DIR"
+else
+    echo "Error: File $INT_OUTPUT_DIR/ilaf${FC_DATE}_n.grb.det not found!"
+    exit 1
+fi
+
+# 3. Link ilaf%FC_DATE%_n.grb.det from LAM_DATA_DIR to INT_OUTPUT_DIR
+dest_file="$INT_OUTPUT_DIR/ilaf${FC_DATE}_n.grb.det"
+if [ -h "$dest_file" ]; then
+    echo "Warning: Symlink $dest_file exists. Replacing it."
+    rm "$dest_file"
+    ln -s "$LAM_DATA_DIR/ilaf${FC_DATE}_n.grb.det" "$dest_file"
+    echo "Re-linked: $dest_file"
+elif [ -f "$dest_file" ]; then
+    echo "Warning: Regular file $dest_file exists. Skipping link creation."
+else
+    ln -s "$LAM_DATA_DIR/ilaf${FC_DATE}_n.grb.det" "$dest_file"
+    echo "Linked: $dest_file"
+fi
+
+# 4. Link ilaf%FC_DATE%_n.grb.det from LAM_DATA_DIR to MORE_INPUT_DIR
+dest_file="$MORE_INPUT_DIR/ilaf${FC_DATE}_n.grb.det"
+if [ -h "$dest_file" ]; then
+    echo "Warning: Symlink $dest_file exists. Replacing it."
+    rm "$dest_file"
+    ln -s "$LAM_DATA_DIR/ilaf${FC_DATE}_n.grb.det" "$dest_file"
+    echo "Re-linked: $dest_file"
+elif [ -f "$dest_file" ]; then
+    echo "Warning: Regular file $dest_file exists. Skipping link creation."
+else
+    ln -s "$LAM_DATA_DIR/ilaf${FC_DATE}_n.grb.det" "$dest_file"
+    echo "Linked: $dest_file"
+fi
+
+# 5. Link ilaf%FC_DATE%_n.grb.det to ini_R19B08_N02.%FC_DATE%0000 in MORE_INPUT_DIR
+dest_file="$MORE_INPUT_DIR/ini_R19B08_N02.$FC_DATE"0000
+if [ -h "$dest_file" ]; then
+    echo "Warning: Symlink $dest_file exists. Replacing it."
+    rm "$dest_file"
+    ln -s "$MORE_INPUT_DIR/ilaf${FC_DATE}_n.grb.det" "$dest_file"
+    echo "Re-linked: $dest_file"
+elif [ -f "$dest_file" ]; then
+    echo "Warning: Regular file $dest_file exists. Skipping link creation."
+else
+    ln -s "$MORE_INPUT_DIR/ilaf${FC_DATE}_n.grb.det" "$dest_file"
+    echo "Linked: $dest_file"
+fi
+
+# If all checks pass, the task completes successfully
+echo "All needed files have been successfully linked to '%MORE_INPUT_DIR%'."
+
+%include <tail.h>

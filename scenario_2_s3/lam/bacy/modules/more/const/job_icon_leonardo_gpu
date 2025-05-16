@@ -1,0 +1,89 @@
+#!/bin/bash
+                                        #### BATCH_SYSTEM=SLURM ####
+########################################################################
+#SBATCH --account DE360_GLORI
+#SBATCH --partition %queue%
+#SBATCH --job-name  ICON_GLO_%expid%
+#SBATCH --output=end_LL_%filesuffix%
+#SBATCH --error=err_LL_%filesuffix%
+#SBATCH --nodes=%nodes%
+#SBATCH --gres=gpu:%hyperthreads%
+#SBATCH --threads-per-core=1
+#SBATCH --ntasks-per-node=%hyperthreads%
+#SBATCH --cpus-per-task=%ompthreads%
+#SBATCH --time=06:00:00
+#SBATCH --mem=481G
+#SBATCH --exclude=lrdn0026,lrdn0043,lrdn0286,lrdn0323,lrdn0359,lrdn0906
+#SBATCH --export=ALL,BINARY=%binary%
+########################################################################
+#
+module purge
+# load correct modules from ~/.bashrc as SLURM creates a new shell
+module load profile/meteo
+module load nvhpc/23.1
+module load openmpi/4.1.4--nvhpc--23.1-cuda-11.8
+module load eccodes/2.25.0--nvhpc--23.1
+module load cdo/2.1.0--gcc--11.3.0
+export ECCODES_DEFINITION_PATH="/leonardo_scratch/fast/DE360_GLORI/definitions/2.32.0-2/definitions.edzw":"/leonardo_scratch/fast/DE360_GLORI/definitions/2.32.0-2/definitions"
+export PATH="/leonardo_work/DE360_GLORI/spack_env/install/linux-rhel8-icelake/nvhpc-23.1/eccodes-2.32.0-uvqgacgswurbbpjrl6wxocgevjs5mqxk/bin":$PATH
+export PATH="/leonardo_work/DE360_GLORI/spack_env/install/linux-rhel8-icelake/nvhpc-23.1/netcdf-c-4.9.2-2tw6sc6pyqnex6fp466os3luysxivtty/bin":$PATH
+export PATH="/leonardo_work/DE360_GLORI/spack_env/install/linux-rhel8-icelake/nvhpc-23.1/hdf5-1.14.3-o4ctspbmy2t5wnqg35lnzcfvbqugivjo/bin":$PATH
+export PATH="/leonardo/prod/spack/03/install/0.19/linux-rhel8-icelake/nvhpc-23.1/openmpi-4.1.4-6ek2oqarjw755glr5papxirjmamqwvgd/bin":$PATH
+export WRAPPER=%wrapper%
+echo
+echo "###MODEL_%model%: Job-ID : $SLURM_JOB_ID"
+echo "###MODEL_%model%: Host   : $(hostname)"
+echo
+echo "which mpirun?"
+which mpirun
+echo
+#
+########################################################################
+ NODES=%nodes%
+ HYPER=%hyperthreads%
+########################################################################
+ export OMP_NUM_THREADS=${OMP_NUM_THREADS:-1}
+ export NUM_CORES=${SLURM_NTASKS}*${SLURM_CPUS_PER_TASK}
+ echo "${BINARY} running on ${NUM_CORES} cores with ${SLURM_NTASKS} MPI-tasks and ${OMP_NUM_THREADS} threads"
+########################################################################
+ export ICON_THREADS=${OMP_NUM_THREADS}
+ export OMP_SCHEDULE="static"
+ export OMP_DYNAMIC="false"
+########################################################################
+cd $SLURM_SUBMIT_DIR
+echo $SLURM_SUBMIT_DIR
+for ensmem in $(seq %ensmem_start% %ensmem_end%); do
+  ensmem3=$(printf "%.3d" $ensmem)
+  if [ "$ensmem" -eq 0 ]; then
+    message="deterministic run"
+    cd %rundir%/det
+  else
+    message="ensemble member $ensmem (of %ensmem_end%)"
+    cd %rundir%/mem${ensmem3}
+  fi
+  echo "in rundir: $(pwd)"
+  echo
+  ls -lL $BINARY
+  rm -f READY
+  echo
+  echo "###MODEL_%model%: calling binary for $message at $(date)"
+  echo
+# Set MPI run options
+  export MPIRUN_OPTIONS="--bind-to core --map-by core -report-bindings"
+  startexe="mpirun -n ${SLURM_NTASKS} ${MPIRUN_OPTIONS} ${WRAPPER} ${BINARY}"
+  echo $startexe
+  mpirun -n ${SLURM_NTASKS} ${MPIRUN_OPTIONS} ${WRAPPER} ${BINARY}
+  rc=$?
+  echo "------------------------------------------------------------------------"
+  echo
+  echo "###MODEL_%model%: done with binary for $message at $(date)"
+  echo
+  if [ $rc -ne 0 ]; then
+    echo; echo >&2
+    echo "mpirun failed: rc=$rc" >&2
+    echo "mpirun failed: rc=$rc"
+    echo; echo >&2
+    exit $rc
+  fi
+  date > READY
+done
